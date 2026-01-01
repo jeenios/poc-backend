@@ -5,8 +5,8 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
+  engineType = "library"
 }
 
 datasource db {
@@ -34,5 +34,21 @@ model Contact {
 
   user User @relation(fields: [username], references: [username])
 
+  addresses Address[]
+
   @@map("contacts")
+}
+
+model Address{
+  id         Int     @id @default(autoincrement())
+  street     String  @db.VarChar(255)
+  city       String  @db.VarChar(100)
+  province   String  @db.VarChar(100)
+  country    String  @db.VarChar(100)
+  post_code  String  @db.VarChar(10)
+  contact_id Int
+
+  contact Contact @relation(fields: [contact_id], references: [id])
+
+  @@map("addresses")
 }
