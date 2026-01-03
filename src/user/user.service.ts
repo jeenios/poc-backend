@@ -5,12 +5,14 @@ import {
   RegisterUserRequest,
   LoginUserRequest,
   UserResponse,
+  UpdateUserRequest,
 } from '../model/user.model';
 import { ValidationService } from '../common/validation.service';
 import { PrismaService } from '../common/prisma.service';
 import { UserValidation } from './user.validation';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class UserService {
@@ -20,8 +22,10 @@ export class UserService {
     @Inject(WINSTON_MODULE_PROVIDER)
     private logger: Logger,
   ) {}
+
+  // Logic buat register user
   async register(request: RegisterUserRequest): Promise<UserResponse> {
-    this.logger.info(`Register new user ${JSON.stringify(request)}`);
+    this.logger.debug(`Register new user ${JSON.stringify(request)}`);
     const registerRequest: RegisterUserRequest =
       this.validationService.validate(
         UserValidation.REGISTER,
@@ -46,8 +50,9 @@ export class UserService {
     };
   }
 
+  // Logic buat login user
   async login(request: LoginUserRequest): Promise<UserResponse> {
-    this.logger.info(`Login user ${JSON.stringify(request)}`);
+    this.logger.debug(`Login user ${JSON.stringify(request)}`);
     const loginRequest: LoginUserRequest = this.validationService.validate(
       UserValidation.LOGIN,
       request,
@@ -83,6 +88,63 @@ export class UserService {
       username: user.username,
       name: user.name,
       token: user.token!,
+    };
+  }
+
+  // Logic buat get user by token
+  async get(user: User): Promise<UserResponse> {
+    return {
+      username: user.username,
+      name: user.name,
+    };
+  }
+
+  // Logic buat update user
+  async update(user: User, request: UpdateUserRequest): Promise<UserResponse> {
+    this.logger.debug(
+      `UPdate user ${JSON.stringify(user)}, ${JSON.stringify(request)}`,
+    );
+
+    const updateUserRequest: UpdateUserRequest =
+      this.validationService.validate(
+        UserValidation.UPDATE,
+        request,
+      ) as UpdateUserRequest;
+
+    if (updateUserRequest.name) {
+      user.name = updateUserRequest.name;
+    }
+
+    if (updateUserRequest.password) {
+      user.password = await bcrypt.hash(updateUserRequest.password, 10);
+    }
+
+    const result = await this.prismaService.user.update({
+      where: {
+        username: user.username,
+      },
+      data: user,
+    });
+
+    return {
+      username: result.username,
+      name: result.name,
+    };
+  }
+
+  // Logic buat logout user
+  async logout(user: User): Promise<UserResponse> {
+    const result = await this.prismaService.user.update({
+      where: {
+        username: user.username,
+      },
+      data: {
+        token: null,
+      },
+    });
+    return {
+      username: result.username,
+      name: result.name,
     };
   }
 }

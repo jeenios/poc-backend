@@ -3,6 +3,8 @@
     "yzhang.markdown-all-in-one",
     "shd101wyy.markdown-preview-enhanced",
     "esbenp.prettier-vscode",
-    "Prisma.prisma"
+    "Prisma.prisma",
+    "orta.vscode-jest",
+    "firsttris.vscode-jest-runner"
   ]
 }
